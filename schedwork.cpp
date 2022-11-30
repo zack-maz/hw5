@@ -23,75 +23,6 @@ static const Worker_T INVALID_ID = (unsigned int)-1;
 
 // Add your implementation of schedule() and other helper functions here
 
-/*bool schedule(
-    const AvailabilityMatrix& avail,
-    const size_t dailyNeed,
-    const size_t maxShifts,
-    DailySchedule& sched
-)
-{
-    if(avail.size() == 0U){
-        return false;
-    }
-    sched.clear();
-
-    std::vector<unsigned int> workerDays;
-    for (unsigned int i =0; i < avail.size(); i++) workerDays.push_back(0);
-
-    return scheduleHelper(avail, dailyNeed, maxShifts, sched, workerDays, 0);
-}
-
-
-
-bool scheduleHelper(
-    const AvailabilityMatrix& avail,
-    const size_t dailyNeed,
-    const size_t maxShifts,
-    DailySchedule& sched,
-    std::vector<unsigned int> workerDays,
-    unsigned int currentDay
-)
-{
-    unsigned int maxDays = avail.size();
-    if (currentDay >= maxDays) 
-    {
-      return true;
-    }
-
-    
-    
-    
-    
-    
-    
-    
-    int needed = dailyNeed;
-    std::vector<Worker_T> daySched;
-
-
-    for (unsigned int i = 0; i < avail[currentDay].size(); i++)
-    {
-        if (avail[currentDay][i] && workerDays[i] < maxShifts && needed > 0)
-        {
-            workerDays[i]++;
-            daySched.push_back(i);
-            needed--;
-        }
-        if (needed == 0) 
-        {
-            sched.push_back(daySched);
-            if (scheduleHelper(avail, dailyNeed, maxShifts, sched, workerDays, currentDay+1))
-            {
-              return true;
-            }
-            else
-            {
-
-            }
-        }
-    }
-    return false;
-}*/
 
 
 
@@ -110,7 +41,8 @@ bool schedule(
 
     std::vector<unsigned int> daysPerWorker; //count how many days each worker has worked
     for (unsigned int i = 0; i < avail[0].size(); i++) daysPerWorker.push_back(0);
-
+    std::vector<Worker_T> firstDay;
+    sched.push_back(firstDay);
     return scheduleHelper(avail, dailyNeed, maxShifts, sched, daysPerWorker);
 
 
@@ -131,9 +63,11 @@ bool scheduleHelper(
     if (size >= avail.size() && sched[size-1].size() == dailyNeed) return true;
   }
 
-  std::vector<Worker_T> nextDay;
-  if (sched.size() == 0) sched.push_back(nextDay); //add new day schedule if our schedule is empty
-  else if (sched[sched.size()-1].size() == dailyNeed) sched.push_back(nextDay); //add new day schedule if we have enough workers for daily need
+  if (sched[size-1].size() == dailyNeed) 
+  {
+    std::vector<Worker_T> nextDay;
+    sched.push_back(nextDay); //add new day schedule if we have enough workers for daily need
+  }
   int currentDay = sched.size()-1;
 
 
@@ -142,18 +76,23 @@ bool scheduleHelper(
 
   for (unsigned int i = 0; i < avail[currentDay].size(); i++) //go through every worker today
   {
-    //if the worker hasn't been added, they're available. and they don't have their maxShifts
-    if ((std::find(sched[currentDay].begin(), sched[currentDay].end(), i) == sched[currentDay].end()) && (avail[currentDay][i] == 1) && (daysPerWorker[i] < maxShifts))
+    if (avail[currentDay][i] && daysPerWorker[i] < maxShifts) //make sure worker is available and hasnt worked too much
     {
-      sched[currentDay].push_back(i); //add worker to schedule
-      daysPerWorker[i]++; //keep track of how many days theyve worked
-      if (scheduleHelper(avail, dailyNeed, maxShifts, sched, daysPerWorker)) return true; //if it passes, then this schedule works as a proper schedule
-      sched[currentDay].pop_back(); //doesnt work, check with next worker
-      daysPerWorker[i]--;
+      if (std::find(sched[currentDay].begin(), sched[currentDay].end(), i) == sched[currentDay].end()) //then see if worker has already worked today
+      {
+        sched[currentDay].push_back(i); //add worker to schedule
+        daysPerWorker[i]++; //keep track of how many days theyve worked
+        if (scheduleHelper(avail, dailyNeed, maxShifts, sched, daysPerWorker)) return true; //if it passes, then this schedule works as a proper schedule
+        else
+        {
+          sched[currentDay].pop_back(); //doesnt work, check with next worker
+          daysPerWorker[i]--;
+        }
+      }
     }
   }
 
   if (sched[currentDay].size() == 0) sched.pop_back(); //if we checked all workers and the sched doesn't work, pop back and try different combos for previous day
-  return false;
+  return false; //no workers fit in schedule, backstep to previous worker
 
 }

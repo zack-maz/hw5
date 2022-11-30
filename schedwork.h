@@ -40,7 +40,7 @@ bool scheduleHelper(
     const size_t dailyNeed,
     const size_t maxShifts,
     DailySchedule& sched,
-    std::vector<unsigned int> daysPerWorker
+    std::vector<unsigned int> workerDays
 );
 
 #endif
